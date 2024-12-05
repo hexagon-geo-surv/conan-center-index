@@ -13,8 +13,10 @@ class TestPackageConan(ConanFile):
     generators = "VCVars"
     test_type = "explicit"
 
+    def requirements(self):
+        self.requires(self.tested_reference_str)
+
     def build_requirements(self):
-        self.tool_requires(self.tested_reference_str)
         self.tool_requires("ninja/1.11.1")
 
     def layout(self):
@@ -47,7 +49,7 @@ class TestPackageConan(ConanFile):
                 rel_bindir,
                 f'--args="target_os=\\"{self._target_os}\\" target_cpu=\\"{self._target_cpu}\\""',
             ]
-            self.run("gn gen " + " ".join(gn_args))
+            self.run("gn gen " + " ".join(gn_args), env="conanrun")
             self.run(f"ninja -v -j{os.cpu_count()} -C {rel_bindir}")
 
     def test(self):

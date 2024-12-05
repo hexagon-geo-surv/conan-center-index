@@ -2,10 +2,8 @@ import os
 import shutil
 import sys
 import textwrap
-import time
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os, XCRun
 from conan.tools.build import check_min_cppstd
 from conan.tools.env import VirtualBuildEnv, Environment
@@ -14,7 +12,7 @@ from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc, VCVars
 from conan.tools.scm import Version
 
-required_conan_version = ">=1.47.0"
+required_conan_version = ">=2.0.9"
 
 
 class GnConan(ConanFile):
@@ -36,36 +34,13 @@ class GnConan(ConanFile):
 
     @property
     def _min_cppstd(self):
-        if self.version == "cci.20210429":
+        if Version(self.version) == "cci.20210429":
             return 17
         else:
             return 20
 
-    @property
-    def _minimum_compiler_version(self):
-        if self._min_cppstd == 17:
-            return {
-                "Visual Studio": 15,
-                "msvc": 191,
-                "gcc": 7,
-                "clang": 4,
-                "apple-clang": 10,
-            }.get(str(self.settings.compiler))
-        else:
-            return {
-                "gcc": "11",
-                "clang": "12",
-                "apple-clang": "15",
-                "msvc": "192",
-                "Visual Studio": "16",
-            }.get(str(self.settings.compiler))
-
     def validate_build(self):
-        if self.settings.compiler.cppstd:
-            check_min_cppstd(self, self._min_cppstd)
-        if self._minimum_compiler_version and Version(self.settings.compiler.version) < self._minimum_compiler_version:
-            raise ConanInvalidConfiguration(f"gn requires a compiler supporting C++{self._min_cppstd}")
-
+        check_min_cppstd(self, self._min_cppstd)
 
     def build_requirements(self):
         # FIXME: add cpython build requirements for `build/gen.py`.
@@ -168,7 +143,3 @@ class GnConan(ConanFile):
         self.cpp_info.frameworkdirs = []
         self.cpp_info.libdirs = []
         self.cpp_info.resdirs = []
-
-        bin_path = os.path.join(self.package_folder, "bin")
-        self.output.info(f"Appending PATH environment variable: {bin_path}")
-        self.env_info.PATH.append(bin_path)
